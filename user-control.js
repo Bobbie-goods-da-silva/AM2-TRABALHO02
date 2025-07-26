@@ -9,6 +9,26 @@ const { el } = require("@faker-js/faker");
 const fs = require("fs/promises");
 const path = require("path");
 const lockfile = require("proper-lockfile");
+// Integração do mecanismo de APPEND no arquivo JSON
+const { appendUsuarioJson } = require('./appendUsuarioJson');
+
+/**
+ * Adiciona um novo usuário ao arquivo usuarios.json usando o mecanismo de append.
+ *
+ * @param {Object} usuario - Objeto do usuário a ser adicionado
+ * @returns {Promise<void>}
+ */
+async function adicionarUsuario(usuario) {
+  // Aqui pode-se incluir validação dos dados antes de adicionar
+  await appendUsuarioJson(usuario);
+}
+
+// Exporta todas as funções do módulo
+module.exports = {
+  lerUsuarios,
+  salvarUsuarios,
+  adicionarUsuario,
+};
 
 const filePath = path.join(__dirname, "usuarios.json");
 
@@ -114,8 +134,3 @@ async function salvarUsuarios(usuarios) {
     }
   });
 }
-
-module.exports = {
-  lerUsuarios,
-  salvarUsuarios,
-};
