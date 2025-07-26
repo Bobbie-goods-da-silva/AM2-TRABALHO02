@@ -3,9 +3,24 @@
 const fs = require("fs");
 const { faker } = require("@faker-js/faker");
 const { v4: uuidv4 } = require("uuid");
-const TOTAL_USUARIOS = 10_000;
 const LOTE = 100;
 const ARQUIVO = "usuarios.json";
+
+let TOTAL_USUARIOS;
+
+// Verifica se o argumento de linha de comando foi fornecido
+if (process.argv.length < 3) {
+  TOTAL_USUARIOS = 100;
+  console.error(
+    "O argumento 'users' é necessário para gerar usuários. Foi adotado o tamanho: ",
+    TOTAL_USUARIOS
+  );
+  process.exit(1);
+} else {
+  // Converte o argumento para um número inteiro
+  TOTAL_USUARIOS = parseInt(process.argv[2], 10);
+  console.log(`Argumento fornecido: ${TOTAL_USUARIOS} usuários serão gerados.`);
+}
 
 function gerarUsuario() {
   return {

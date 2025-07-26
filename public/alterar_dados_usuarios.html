@@ -2,15 +2,14 @@
 <html lang="pt-br">
   <head>
     <meta charset="UTF-8" />
-    <title>Tabela de Usuários com Paginação</title>
+    <title>Alterar Dados de Usuários</title>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <h1>👥 Lista de Usuários com Paginação</h1>
-    <!-- Adicione estes links no menu do index.html -->
+    <h1>✏️ Alterar Dados de Usuários</h1>
     <menu>
+      <a href="index.html">Voltar para Lista</a>
       <a href="cadastra_usuario.html">Cadastrar Usuário</a>
-      <a href="alterar_dados_usuarios.html">Alterar Usuários</a>
       <a href="remover_usuario.html">Remover Usuários</a>
     </menu>
     <table id="tabelaUsuarios">
@@ -20,6 +19,7 @@
           <th onclick="ordenarTabela('idade')">Idade ⬍</th>
           <th>Endereço</th>
           <th>Email</th>
+          <th>Ação</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -32,5 +32,6 @@
     </div>
 
     <script src="script.js"></script>
+    <script src="alterar_usuario.js"></script>
   </body>
 </html>

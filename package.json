@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node --env-file=.env server.js ",
-    "dev": "nodemon --env-file=.env server.js"
+    "dev": "nodemon --env-file=.env server.js",
+    "generate:users": "node --env-file=.env gerar_usuarios_fake.js"
   },
   "keywords": [
     "usuarios",
@@ -18,8 +19,10 @@
   "license": "LGPL-3.0-or-later",
   "dependencies": {
     "@faker-js/faker": "^8.0.2",
+    "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.2",
     "proper-lockfile": "^4.1.2",
     "uuid": "^9.0.0"
   },

@@ -9,7 +9,7 @@
  * - Rota POST /cadastrar-usuario para cadastrar novo usuário com ID único.
  * - Persistência em arquivo JSON com bloqueio de escrita/leitura seguro (via proper-lockfile).
  *
- * Autor: Wellington (com pitacos do Braniac 😎)
+ * Autor: Prof. Wellington Sarmento (com pitacos do Braniac 😎)
  * Data: 2025
  */
 
@@ -22,7 +22,7 @@ const cors = require("cors"); // Middleware para permitir requisições de outra
 const path = require("path"); // Lida com caminhos de arquivos e diretórios
 const { v4: uuidv4 } = require("uuid"); // Gera IDs únicos universais (UUID v4)
 
-const { lerUsuarios, salvarUsuarios } = require("./users-control.js"); // Módulo de controle de leitura/escrita com lock
+const { lerUsuarios, salvarUsuarios } = require("./user-control.js"); // Módulo de controle de leitura/escrita com lock
 
 // -----------------------------------------------------------------------------
 // CONFIGURAÇÃO DO SERVIDOR
@@ -33,6 +33,8 @@ const app = express(); // Cria uma aplicação Express
 // Define o host e a porta (usa variáveis de ambiente se existirem)
 const HOST = process.env.HOST || "localhost";
 const PORT = process.env.PORT || 3000;
+
+let num; // Variável para armazenar o número de usuários a serem lidos do arquivo
 
 // Ativa o parser de JSON para o corpo das requisições
 app.use(express.json());
@@ -61,17 +63,24 @@ app.get("/", (req, res) => {
  *
  * @param {number} count (opcional) - número máximo de usuários a retornar (default: 100)
  */
-app.get("/list-users/:count?", async (req, res) => {
-  let num = parseInt(req.params.count, 10); // Converte o parâmetro para número inteiro
-  if (isNaN(num)) num = 100; // Valor padrão se não for fornecido
-  num = Math.max(1, Math.min(10000, num)); // Garante que o número esteja entre 1 e 10.000
 
-  console.log(`🔍 Solicitando até ${num} usuários...`);
+app.get("/list-users/:count?", async (req, res) => {
+  num = parseInt(req.params.count, 10); // Converte o parâmetro para número inteiro
+  if (isNaN(num)) num = 100; // Valor padrão se não for fornecido
+  if (num == 0) {
+    // Se não houver limite, retorna todos os usuários
+    console.log(`Nenhum limite aplicado. Retornando todos os usuários.`);
+    num = 10000; // Define um número máximo para evitar sobrecarga
+  } else if (num < 0) {
+    num = 100;
+  } else if (num > 10000) {
+    num = 10000; // Limita o número máximo de usuários a 10.000
+    console.log(`Número máximo de usuários a retornar: ${num}`);
+  }
+
   try {
-    const todos = await lerUsuarios(); // Lê todos os usuários do arquivo
-    const slice = todos.slice(0, num); // Pega os primeiros N usuários
-    console.log(`✔️  Primeiro usuário: ${JSON.stringify(slice[0])}`);
-    res.json(slice); // Retorna os usuários como JSON
+    const todos = await lerUsuarios(num); // Lê N usuários do arquivo
+    res.json(todos); // Retorna os usuários como JSON
   } catch (err) {
     console.error("❌ Falha ao ler usuários:", err);
     res.status(500).json({ error: "Não foi possível ler usuários." });
@@ -89,7 +98,7 @@ app.get("/list-users/:count?", async (req, res) => {
  */
 app.post("/cadastrar-usuario", async (req, res) => {
   try {
-    const usuarios = await lerUsuarios(); // Garante dados atualizados
+    const usuarios = await lerUsuarios(0); // Garante dados atualizados
 
     const novoUsuario = {
       id: uuidv4(), // Gera um UUID para o novo usuário
@@ -110,6 +119,103 @@ app.post("/cadastrar-usuario", async (req, res) => {
   } catch (err) {
     console.error("❌ Erro ao cadastrar usuário:", err);
     res.status(500).json({ error: "Não foi possível cadastrar usuário." });
+  }
+});
+
+/**
+ * Rota PUT /atualizar-usuario/:id
+ * Atualiza os dados de um usuário existente
+ *
+ * @param {string} id - ID do usuário a ser atualizado
+ * @body {string} nome - Novo nome (opcional)
+ * @body {number} idade - Nova idade (opcional)
+ * @body {string} endereco - Novo endereço (opcional)
+ * @body {string} email - Novo email (opcional)
+ */
+
+/**
+ * Qual o "verb" HTTP usar para atualizar um recurso?
+ *
+ * Primeiro, pesquisei verbos do HTTP relacionados a atualização de recursos. Encontrei dois principais:
+ *
+ * PUT:
+ * Este verbo é usado para substituir completamente um recurso existente pelos novos dados fornecidos no corpo da solicitação.
+ * Se o recurso não existir no URI especificado, uma solicitação PUT também pode ser usada para criá-lo, efetivamente
+ * substituindo um recurso "inexistente" por um novo.
+ *
+ * PATCH:
+ * Este verbo é usado para aplicar modificações parciais a um recurso existente. Somente os campos ou propriedades específicos
+ * que precisam ser alterados são incluídos no corpo da solicitação, deixando outras partes do recurso intactas. Isso é
+ * frequentemente preferido ao * lidar com recursos grandes ou complexos, onde o envio de toda a representação do recurso
+ * para uma pequena alteração seria ineficiente.
+ *
+ * Em resumo, embora PUT e PATCH sejam usados para atualizar dados, a principal distinção reside em se todo o recurso
+ * está sendo substituído (PUT) ou apenas partes específicas estão sendo modificadas (PATCH).
+ *
+ * Assim, usei o verb PUT" para a autalização de usuários,
+ * pois a intenção é atualizar todos os campos do usuário, mesmo que alguns não sejam alterados
+ * (ou seja, enviar todos os campos do usuário, mesmo que não sejam alterados).
+ *
+ * */
+
+app.put("/atualizar-usuario/:id", async (req, res) => {
+  try {
+    const usuarios = await lerUsuarios(0);
+    const usuarioIndex = usuarios.findIndex((u) => u.id === req.params.id);
+
+    if (usuarioIndex === -1) {
+      return res.status(404).json({ error: "Usuário não encontrado." });
+    }
+
+    // Atualiza apenas os campos fornecidos
+    if (req.body.nome) usuarios[usuarioIndex].nome = req.body.nome;
+    if (req.body.idade) usuarios[usuarioIndex].idade = req.body.idade;
+    if (req.body.endereco) usuarios[usuarioIndex].endereco = req.body.endereco;
+    if (req.body.email) usuarios[usuarioIndex].email = req.body.email;
+
+    await salvarUsuarios(usuarios);
+    console.log(
+      `✔️ Usuário atualizado: ${JSON.stringify(usuarios[usuarioIndex])}`
+    );
+    res.json({
+      ok: true,
+      message: "Usuário atualizado com sucesso!",
+      usuario: usuarios[usuarioIndex],
+    });
+  } catch (err) {
+    console.error("❌ Erro ao atualizar usuário:", err);
+    res.status(500).json({ error: "Não foi possível atualizar usuário." });
+  }
+});
+
+/**
+ * Rota DELETE /remover-usuario/:id
+ * Remove um usuário do sistema
+ *
+ * @param {string} id - ID do usuário a ser removido
+ */
+app.delete("/remover-usuario/:id", async (req, res) => {
+  try {
+    let usuarios = await lerUsuarios(0);
+    const usuarioIndex = usuarios.findIndex((u) => u.id === req.params.id);
+
+    if (usuarioIndex === -1) {
+      return res.status(404).json({ error: "Usuário não encontrado." });
+    }
+
+    const usuarioRemovido = usuarios[usuarioIndex];
+    usuarios = usuarios.filter((u) => u.id !== req.params.id);
+
+    await salvarUsuarios(usuarios);
+    console.log(`✔️ Usuário removido: ${JSON.stringify(usuarioRemovido)}`);
+    res.json({
+      ok: true,
+      message: "Usuário removido com sucesso!",
+      usuario: usuarioRemovido,
+    });
+  } catch (err) {
+    console.error("❌ Erro ao remover usuário:", err);
+    res.status(500).json({ error: "Não foi possível remover usuário." });
   }
 });
 

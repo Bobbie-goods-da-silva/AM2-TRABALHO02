@@ -1,11 +1,64 @@
-table { width: 100%; border-collapse: collapse; }
-th, td { padding: 8px; border: 1px solid #ccc; }
-th { background: #f0f0f0; cursor: pointer; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+th,
+td {
+  padding: 8px;
+  border: 1px solid #ccc;
+}
+th {
+  background: #f0f0f0;
+  cursor: pointer;
+}
 .paginacao {
-    margin-top: 10px;
-    text-align: center;
+  margin-top: 10px;
+  text-align: center;
 }
 .paginacao button {
-    margin: 0 5px;
-    padding: 5px 10px;
+  margin: 0 5px;
+  padding: 5px 10px;
+}
+
+/* Adicione estas regras ao seu style.css */
+.btn-editar,
+.btn-remover {
+  padding: 5px 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.btn-editar {
+  background-color: #4caf50;
+  color: white;
+}
+
+.btn-editar:hover {
+  background-color: #45a049;
+}
+
+.btn-remover {
+  background-color: #f44336;
+  color: white;
+}
+
+.btn-remover:hover {
+  background-color: #d32f2f;
+}
+
+.filtro {
+  margin: 20px 0;
+}
+
+.filtro input {
+  padding: 8px;
+  margin-right: 10px;
+  width: 300px;
+}
+
+.filtro button {
+  padding: 8px 15px;
+  margin-right: 10px;
 }
