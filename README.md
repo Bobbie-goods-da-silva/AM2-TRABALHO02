@@ -1,7 +1,3 @@
-Claro! Aqui está a versão atualizada do seu README com as informações da equipe, membros, disciplina, curso e universidade, conforme solicitado:
-
----
-
 # 📚 Aplicação de Geração e Manipulação de Usuários Fictícios
 
 Este projeto foi desenvolvido como parte da disciplina **Autoração Multimídia II**, do curso de **Bacharelado em Sistemas e Mídias Digitais** da **Universidade Federal do Ceará (UFC)**.
