@@ -112,6 +112,12 @@ A aplicação estará disponível em: `http://localhost:3000`
 
 ---
 
+## 🛠️ Mecanismo de Append
+
+O sistema agora conta com um mecanismo eficiente de **append** para adicionar novos usuários ao arquivo `usuarios.json` sem a necessidade de ler e reescrever todo o conteúdo do arquivo. Este mecanismo utiliza bloqueio de arquivos com o pacote `proper-lockfile` para garantir segurança em operações concorrentes, evitando condições de corrida e mantendo a integridade do JSON.
+
+---
+
 ## 📝 Licença
 
 Este projeto está licenciado sob a Licença MIT.

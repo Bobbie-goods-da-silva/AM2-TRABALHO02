@@ -19,8 +19,9 @@ const { appendUsuarioJson } = require('./appendUsuarioJson');
  * @returns {Promise<void>}
  */
 async function adicionarUsuario(usuario) {
-  // Aqui pode-se incluir validação dos dados antes de adicionar
-  await appendUsuarioJson(usuario);
+  return comLock(async () => {
+    await appendUsuarioJson(usuario);
+  });
 }
 
 // Exporta todas as funções do módulo
