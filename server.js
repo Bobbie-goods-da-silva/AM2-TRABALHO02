@@ -22,7 +22,8 @@ const cors = require("cors"); // Middleware para permitir requisições de outra
 const path = require("path"); // Lida com caminhos de arquivos e diretórios
 const { v4: uuidv4 } = require("uuid"); // Gera IDs únicos universais (UUID v4)
 
-const { lerUsuarios, salvarUsuarios } = require("./user-control.js"); // Módulo de controle de leitura/escrita com lock
+const { lerUsuarios, salvarUsuarios, adicionarUsuario } = require("./user-control.js"); // Controle de leitura/escrita e append
+const { sanitizarEValidarUsuario } = require('./validacao'); // Middleware de validação e sanitização
 
 // -----------------------------------------------------------------------------
 // CONFIGURAÇÃO DO SERVIDOR
@@ -38,7 +39,7 @@ let num; // Variável para armazenar o número de usuários a serem lidos do arq
 
 // Ativa o parser de JSON para o corpo das requisições
 app.use(express.json());
-
+// Middleware aplicado apenas nas rotas específicas (POST e PUT)
 // Define a pasta "public" como estática (servirá arquivos HTML, CSS, etc.)
 app.use(express.static(path.join(__dirname, "public")));
 
@@ -96,20 +97,17 @@ app.get("/list-users/:count?", async (req, res) => {
  * @body {string} endereco - Endereço
  * @body {string} email - E-mail
  */
-app.post("/cadastrar-usuario", async (req, res) => {
+app.post("/cadastrar-usuario", sanitizarEValidarUsuario, async (req, res) => {
   try {
-    const usuarios = await lerUsuarios(0); // Garante dados atualizados
-
+    // Usa dados limpos do middleware
+    const dados = req.sanitizedBody;
     const novoUsuario = {
-      id: uuidv4(), // Gera um UUID para o novo usuário
-      nome: req.body.nome,
-      idade: req.body.idade,
-      endereco: req.body.endereco,
-      email: req.body.email,
+      id: uuidv4(),
+      ...dados,
+      criadoEm: new Date().toISOString(),
     };
-
-    usuarios.push(novoUsuario); // Adiciona à lista
-    await salvarUsuarios(usuarios); // Salva no arquivo com lock
+    // Append seguro no arquivo JSON
+    await adicionarUsuario(novoUsuario);
     console.log(`✔️ Usuário cadastrado: ${JSON.stringify(novoUsuario)}`);
     res.status(201).json({
       ok: true,
@@ -158,7 +156,7 @@ app.post("/cadastrar-usuario", async (req, res) => {
  *
  * */
 
-app.put("/atualizar-usuario/:id", async (req, res) => {
+app.put("/atualizar-usuario/:id", sanitizarEValidarUsuario, async (req, res) => {
   try {
     const usuarios = await lerUsuarios(0);
     const usuarioIndex = usuarios.findIndex((u) => u.id === req.params.id);
@@ -167,11 +165,9 @@ app.put("/atualizar-usuario/:id", async (req, res) => {
       return res.status(404).json({ error: "Usuário não encontrado." });
     }
 
-    // Atualiza apenas os campos fornecidos
-    if (req.body.nome) usuarios[usuarioIndex].nome = req.body.nome;
-    if (req.body.idade) usuarios[usuarioIndex].idade = req.body.idade;
-    if (req.body.endereco) usuarios[usuarioIndex].endereco = req.body.endereco;
-    if (req.body.email) usuarios[usuarioIndex].email = req.body.email;
+    // Mescla dados existentes com os dados limpos
+    const dadosAtualizados = req.sanitizedBody;
+    usuarios[usuarioIndex] = { ...usuarios[usuarioIndex], ...dadosAtualizados };
 
     await salvarUsuarios(usuarios);
     console.log(
