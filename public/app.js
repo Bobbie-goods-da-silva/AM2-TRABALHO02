@@ -21,6 +21,52 @@ const routes = {
 };
 
 /**
+ * Exibe o loader no contêiner de conteúdo
+ */
+function showLoader() {
+  const appContent = document.getElementById('app-content');
+  appContent.innerHTML = '<div class="loader"></div>';
+}
+
+/**
+ * Remove o loader do contêiner de conteúdo
+ */
+function hideLoader() {
+  const loader = document.querySelector('.loader');
+  if (loader) {
+    loader.remove();
+  }
+}
+
+/**
+ * Exibe uma mensagem no topo do contêiner de conteúdo
+ * @param {string} message - Texto da mensagem
+ * @param {string} type - Tipo da mensagem ('success' ou 'error')
+ */
+function showMessage(message, type) {
+  const appContent = document.getElementById('app-content');
+  
+  // Remove mensagens anteriores
+  const existingMessages = appContent.querySelectorAll('.message');
+  existingMessages.forEach(msg => msg.remove());
+  
+  // Cria nova mensagem
+  const messageEl = document.createElement('div');
+  messageEl.className = `message ${type}`;
+  messageEl.textContent = message;
+  
+  // Insere no topo do contêiner
+  appContent.insertBefore(messageEl, appContent.firstChild);
+  
+  // Remove a mensagem após 5 segundos
+  setTimeout(() => {
+    if (messageEl.parentNode) {
+      messageEl.remove();
+    }
+  }, 5000);
+}
+
+/**
  * Função assíncrona que carrega os usuários da API
  */
 async function carregarUsuarios(num = 0) {
@@ -46,6 +92,13 @@ function atualizarPaginacao() {
   
   if (paginaAtualEl) paginaAtualEl.innerText = paginaAtual;
   if (totalPaginasEl) totalPaginasEl.innerText = totalPaginas;
+
+  // Atualiza estado dos botões de paginação
+  const btnAnterior = document.querySelector('.paginacao button:first-child');
+  const btnProxima = document.querySelector('.paginacao button:last-child');
+  
+  if (btnAnterior) btnAnterior.disabled = paginaAtual <= 1;
+  if (btnProxima) btnProxima.disabled = paginaAtual >= totalPaginas;
 
   const inicio = (paginaAtual - 1) * usuariosPorPagina;
   const fim = inicio + usuariosPorPagina;
@@ -153,6 +206,9 @@ async function handleLocation() {
     return;
   }
   
+  // Mostra o loader antes de carregar a view
+  showLoader();
+  
   try {
     const response = await fetch(viewPath);
     
@@ -182,9 +238,14 @@ async function handleLocation() {
         break;
     }
     
+    // Remove o loader após carregar tudo
+    hideLoader();
+    
   } catch (error) {
     console.error('Erro ao carregar a view:', error);
+    hideLoader();
     document.getElementById('app-content').innerHTML = '<h2>Erro ao carregar a página</h2>';
+    showMessage('Erro ao carregar a página', 'error');
   }
 }
 
@@ -203,6 +264,9 @@ function setupCadastroForm() {
       const endereco = document.getElementById("endereco").value;
       const email = document.getElementById("email").value;
       
+      // Mostra loader durante o envio
+      showLoader();
+      
       try {
         const response = await fetch("/cadastrar-usuario", {
           method: "POST",
@@ -219,79 +283,68 @@ function setupCadastroForm() {
         
         const resultado = await response.json();
         
-        const mensagemDiv = document.getElementById("mensagem");
-        const novoUsuarioDiv = document.getElementById("novoUsuario");
+        // Remove loader
+        hideLoader();
         
         if (response.ok) {
-          mensagemDiv.innerHTML = `<p style="color: green;">${resultado.message}</p>`;
-          novoUsuarioDiv.innerHTML = `
-            <h3>Usuário Cadastrado:</h3>
-            <p><strong>Nome:</strong> ${resultado.usuario.nome}</p>
-            <p><strong>Idade:</strong> ${resultado.usuario.idade}</p>
-            <p><strong>Endereço:</strong> ${resultado.usuario.endereco}</p>
-            <p><strong>Email:</strong> ${resultado.usuario.email}</p>
-          `;
+          showMessage(`Usuário ${resultado.usuario.nome} cadastrado com sucesso!`, 'success');
+          
+          const novoUsuarioDiv = document.getElementById("novoUsuario");
+          if (novoUsuarioDiv) {
+            novoUsuarioDiv.innerHTML = `
+              <h3>Usuário Cadastrado:</h3>
+              <p><strong>Nome:</strong> ${resultado.usuario.nome}</p>
+              <p><strong>Idade:</strong> ${resultado.usuario.idade}</p>
+              <p><strong>Endereço:</strong> ${resultado.usuario.endereco}</p>
+              <p><strong>Email:</strong> ${resultado.usuario.email}</p>
+            `;
+          }
           formulario.reset();
         } else {
-          mensagemDiv.innerHTML = `<p style="color: red;">Erro: ${resultado.error}</p>`;
+          showMessage(`Erro ao cadastrar usuário: ${resultado.error}`, 'error');
         }
       } catch (error) {
         console.error("Erro ao cadastrar usuário:", error);
-        document.getElementById("mensagem").innerHTML = 
-          '<p style="color: red;">Erro ao cadastrar usuário.</p>';
+        hideLoader();
+        showMessage('Erro ao conectar com o servidor', 'error');
       }
     });
   }
 }
 
 /**
- * Função para editar usuário
+ * Função para editar usuário usando modal customizado
  */
 async function editarUsuario(id) {
   const usuario = usuarios.find(u => u.id === id);
   if (!usuario) return;
   
-  const nome = prompt("Nome:", usuario.nome);
-  const idade = prompt("Idade:", usuario.idade);
-  const endereco = prompt("Endereço:", usuario.endereco);
-  const email = prompt("Email:", usuario.email);
+  // Preenche os campos do modal com os dados do usuário
+  document.getElementById('modalNome').value = usuario.nome;
+  document.getElementById('modalIdade').value = usuario.idade;
+  document.getElementById('modalEndereco').value = usuario.endereco || '';
+  document.getElementById('modalEmail').value = usuario.email;
   
-  if (nome && idade && endereco && email) {
-    try {
-      const response = await fetch(`/atualizar-usuario/${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          nome,
-          idade: parseInt(idade),
-          endereco,
-          email,
-        }),
-      });
-      
-      const resultado = await response.json();
-      if (resultado.ok) {
-        alert("Usuário atualizado com sucesso!");
-        carregarUsuarios();
-      } else {
-        alert("Erro ao atualizar usuário: " + (resultado.error || "Erro desconhecido"));
-      }
-    } catch (error) {
-      console.error("Erro:", error);
-      alert("Erro ao conectar com o servidor");
-    }
-  }
+  // Armazena o ID do usuário que está sendo editado
+  const modal = document.getElementById('modalEdicao');
+  modal.setAttribute('data-usuario-id', id);
+  
+  // Exibe o modal
+  modal.style.display = 'flex';
 }
 
 /**
  * Função para remover usuário
  */
 async function removerUsuario(id) {
-  if (!confirm("Tem certeza que deseja remover este usuário?")) {
+  const usuario = usuarios.find(u => u.id === id);
+  if (!usuario) return;
+  
+  if (!confirm(`Tem certeza que deseja remover o usuário ${usuario.nome}?`)) {
     return;
   }
+
+  showLoader();
 
   try {
     const response = await fetch(`/remover-usuario/${id}`, {
@@ -299,21 +352,120 @@ async function removerUsuario(id) {
     });
 
     const resultado = await response.json();
+    hideLoader();
+    
     if (resultado.ok) {
-      alert("Usuário removido com sucesso!");
+      showMessage(`Usuário ${usuario.nome} removido com sucesso!`, 'success');
       carregarUsuarios();
     } else {
-      alert("Erro ao remover usuário: " + (resultado.error || "Erro desconhecido"));
+      showMessage(`Erro ao remover usuário: ${resultado.error || "Erro desconhecido"}`, 'error');
     }
   } catch (error) {
     console.error("Erro:", error);
-    alert("Erro ao conectar com o servidor");
+    hideLoader();
+    showMessage('Erro ao conectar com o servidor', 'error');
+  }
+}
+
+/**
+ * Função para fechar o modal de edição
+ */
+function fecharModalEdicao() {
+  const modal = document.getElementById('modalEdicao');
+  modal.style.display = 'none';
+  
+  // Limpa os campos do formulário
+  document.getElementById('formEdicao').reset();
+  
+  // Remove o atributo data-usuario-id
+  modal.removeAttribute('data-usuario-id');
+}
+
+/**
+ * Função para salvar as alterações do usuário
+ */
+async function salvarEdicaoUsuario(dadosUsuario, id) {
+  showLoader();
+  
+  try {
+    const response = await fetch(`/atualizar-usuario/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        nome: dadosUsuario.nome,
+        idade: parseInt(dadosUsuario.idade),
+        endereco: dadosUsuario.endereco,
+        email: dadosUsuario.email,
+      }),
+    });
+    
+    const resultado = await response.json();
+    hideLoader();
+    
+    if (resultado.ok) {
+      showMessage(`Usuário ${dadosUsuario.nome} atualizado com sucesso!`, 'success');
+      fecharModalEdicao();
+      carregarUsuarios();
+    } else {
+      showMessage(`Erro ao atualizar usuário: ${resultado.error || "Erro desconhecido"}`, 'error');
+    }
+  } catch (error) {
+    console.error("Erro:", error);
+    hideLoader();
+    showMessage('Erro ao conectar com o servidor', 'error');
   }
 }
 
 // Event listeners
 window.addEventListener('hashchange', handleLocation);
-window.addEventListener('DOMContentLoaded', handleLocation);
+window.addEventListener('DOMContentLoaded', () => {
+  handleLocation();
+  
+  // Event listener para o botão cancelar do modal
+  const btnCancelar = document.getElementById('btnCancelarEdicao');
+  if (btnCancelar) {
+    btnCancelar.addEventListener('click', fecharModalEdicao);
+  }
+  
+  // Event listener para fechar modal clicando no overlay
+  const modalOverlay = document.getElementById('modalEdicao');
+  if (modalOverlay) {
+    modalOverlay.addEventListener('click', (e) => {
+      if (e.target === modalOverlay) {
+        fecharModalEdicao();
+      }
+    });
+  }
+  
+  // Event listener para o formulário de edição
+  const formEdicao = document.getElementById('formEdicao');
+  if (formEdicao) {
+    formEdicao.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const modal = document.getElementById('modalEdicao');
+      const usuarioId = modal.getAttribute('data-usuario-id');
+      
+      if (!usuarioId) {
+        showMessage('Erro: ID do usuário não encontrado', 'error');
+        return;
+      }
+      
+      const formData = new FormData(formEdicao);
+      const dadosUsuario = Object.fromEntries(formData);
+      
+      // Validação básica
+      if (!dadosUsuario.nome || !dadosUsuario.idade || !dadosUsuario.endereco || !dadosUsuario.email) {
+        showMessage('Por favor, preencha todos os campos', 'error');
+        return;
+      }
+      
+      await salvarEdicaoUsuario(dadosUsuario, usuarioId);
+    });
+  }
+});
 
 // Expor funções globalmente
 window.ordenarTabela = ordenarTabela;
@@ -321,3 +473,7 @@ window.paginaAnterior = paginaAnterior;
 window.proximaPagina = proximaPagina;
 window.editarUsuario = editarUsuario;
 window.removerUsuario = removerUsuario;
+window.showLoader = showLoader;
+window.hideLoader = hideLoader;
+window.showMessage = showMessage;
+window.fecharModalEdicao = fecharModalEdicao;

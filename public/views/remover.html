@@ -1,13 +1,85 @@
-<h1>🗑️ Remover Usuários</h1>
-<table id="tabelaUsuarios">
-  <thead>
-    <tr>
-      <th onclick="ordenarTabela('nome')">Nome ⬍</th>
-      <th onclick="ordenarTabela('idade')">Idade ⬍</th>
-      <th>Endereço</th>
-      <th>Email</th>
-      <th>Ação</th>
-    </tr>
-  </thead>
-  <tbody></tbody>
-</table>
+<div class="content-container">
+    <h2>Remover Usuário</h2>
+    
+    <div class="form-container">
+        <form id="removerForm" class="form-modern">
+            <div class="input-group">
+                <label for="idRemover">ID do Usuário:</label>
+                <input type="number" id="idRemover" name="id" required>
+            </div>
+            
+            <div class="button-group">
+                <button type="button" onclick="buscarUsuarioParaRemover()" class="btn-search">Buscar Usuário</button>
+                <button type="submit" class="btn-danger">Remover Usuário</button>
+            </div>
+        </form>
+        
+        <div id="usuarioInfo" style="display: none;" class="user-info">
+            <h3>Informações do Usuário:</h3>
+            <div id="usuarioDetalhes"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    async function buscarUsuarioParaRemover() {
+        const id = document.getElementById('idRemover').value;
+        if (!id) {
+            showMessage('Por favor, informe o ID do usuário', 'error');
+            return;
+        }
+
+        showLoader();
+        try {
+            const response = await fetch(`/usuarios/${id}`);
+            if (response.ok) {
+                const usuario = await response.json();
+                document.getElementById('usuarioDetalhes').innerHTML = `
+                    <p><strong>Nome:</strong> ${usuario.nome}</p>
+                    <p><strong>Idade:</strong> ${usuario.idade}</p>
+                    <p><strong>Email:</strong> ${usuario.email}</p>
+                `;
+                document.getElementById('usuarioInfo').style.display = 'block';
+                showMessage('Usuário encontrado!', 'success');
+            } else {
+                document.getElementById('usuarioInfo').style.display = 'none';
+                showMessage('Usuário não encontrado', 'error');
+            }
+        } catch (error) {
+            showMessage('Erro ao buscar usuário: ' + error.message, 'error');
+        } finally {
+            hideLoader();
+        }
+    }
+
+    document.getElementById('removerForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const id = document.getElementById('idRemover').value;
+        
+        if (!confirm('Tem certeza que deseja remover este usuário?')) {
+            return;
+        }
+
+        showLoader();
+        try {
+            const response = await fetch('/usuarios/' + id, {
+                method: 'DELETE'
+            });
+
+            const result = await response.json();
+            
+            if (response.ok) {
+                showMessage('Usuário removido com sucesso!', 'success');
+                this.reset();
+                document.getElementById('usuarioInfo').style.display = 'none';
+            } else {
+                showMessage(result.error || 'Erro ao remover usuário', 'error');
+            }
+        } catch (error) {
+            showMessage('Erro ao remover usuário: ' + error.message, 'error');
+        } finally {
+            hideLoader();
+        }
+    });
+</script>
