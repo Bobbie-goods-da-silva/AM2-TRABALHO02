@@ -197,4 +197,7 @@ async function removerUsuario(id) {
 }
 
 // Quando a página for carregada, executa a função que busca os usuários
-window.onload = carregarUsuarios;
+// window.onload = carregarUsuarios; // Removido para usar com o roteador
+
+// Exportar funções para uso com o roteador
+export { carregarUsuarios, renderizarTabela, ordenarTabela, paginaAnterior, proximaPagina, atualizarUsuario, removerUsuario };

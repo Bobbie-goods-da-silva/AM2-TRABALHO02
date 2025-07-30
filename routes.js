@@ -32,6 +32,15 @@ router.get("/", (req, res) => {
 });
 
 /**
+ * Rota para servir arquivos da pasta views
+ * GET /views/:filename
+ */
+router.get("/views/:filename", (req, res) => {
+  const filename = req.params.filename;
+  res.sendFile(path.join(__dirname, "public", "views", filename));
+});
+
+/**
  * Rota GET /list-users/:count?
  * Retorna um número limitado de usuários do arquivo usuarios.json
  *

@@ -9,21 +9,12 @@
     <h1>👥 Lista de Usuários com Paginação</h1>
     <!-- Adicione estes links no menu do index.html -->
     <menu>
-      <a href="cadastra_usuario.html">Cadastrar Usuário</a>
-      <a href="alterar_dados_usuarios.html">Alterar Usuários</a>
-      <a href="remover_usuario.html">Remover Usuários</a>
+      <a href="#/">Lista de Usuários</a>
+      <a href="#/cadastro">Cadastrar Usuário</a>
+      <a href="#/alterar">Alterar Usuários</a>
+      <a href="#/remover">Remover Usuários</a>
     </menu>
-    <table id="tabelaUsuarios">
-      <thead>
-        <tr>
-          <th onclick="ordenarTabela('nome')">Nome ⬍</th>
-          <th onclick="ordenarTabela('idade')">Idade ⬍</th>
-          <th>Endereço</th>
-          <th>Email</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+    <main id="app-content"></main>
 
     <div class="paginacao">
       <button onclick="paginaAnterior()">⬅ Anterior</button>
@@ -31,6 +22,6 @@
       <button onclick="proximaPagina()">Próxima ➡</button>
     </div>
 
-    <script src="script.js"></script>
+    <script src="app.js"></script>
   </body>
 </html>
