@@ -44,21 +44,14 @@ router.get("/views/:filename", (req, res) => {
  * Rota GET /list-users/:count?
  * Retorna um número limitado de usuários do arquivo usuarios.json
  *
- * @param {number} count (opcional) - número máximo de usuários a retornar (default: 100)
+ * @param {number} count (opcional) - número máximo de usuários a retornar (sem limite máximo)
  */
 router.get("/list-users/:count?", async (req, res) => {
   let num = parseInt(req.params.count, 10);
-  if (isNaN(num)) num = 0; // Se não informado, retorna todos
-  if (num === 0) {
-    // Sem limite, retorna todos os usuários
-    console.log(`Nenhum limite aplicado. Retornando todos os usuários.`);
-  } else if (num < 0) {
-    num = 100;
-  }
-  // Removido o limite de 10000
+  if (isNaN(num) || num < 0) num = 0; // Se não informado ou negativo, retorna todos
 
   try {
-    const todos = await lerUsuarios(num); // Se num=0, retorna todos
+    const todos = await lerUsuarios(num); // Se num=0, lerUsuarios deve retornar todos
     res.json(todos);
   } catch (err) {
     console.error("❌ Falha ao ler usuários:", err);
