@@ -241,6 +241,14 @@ async function handleLocation() {
     // Remove o loader após carregar tudo
     hideLoader();
     
+    // Condicionalmente mostra ou esconde a seção de paginação
+    const paginacao = document.getElementById('paginacao');
+    if (hash === '#/') {
+      paginacao.style.display = 'block';
+    } else {
+      paginacao.style.display = 'none';
+    }
+    
   } catch (error) {
     console.error('Erro ao carregar a view:', error);
     hideLoader();
