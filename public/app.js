@@ -7,6 +7,7 @@
 
 // Variáveis globais
 let usuarios = [];
+let termoPesquisa = "";
 let paginaAtual = 1;
 const usuariosPorPagina = 20;
 let ordemAtual = { campo: "nome", crescente: true };
@@ -84,23 +85,59 @@ async function carregarUsuarios(num = 0) {
  * Atualiza os dados exibidos na página atual
  */
 function atualizarPaginacao() {
-  const totalPaginas = Math.ceil(usuarios.length / usuariosPorPagina);
+  // Filtra usuários pelo termo de pesquisa
+  let usuariosFiltrados = termoPesquisa
+    ? usuarios.filter(u =>
+        u.nome.toLowerCase().includes(termoPesquisa) ||
+        u.email.toLowerCase().includes(termoPesquisa) ||
+        (u.endereco && u.endereco.toLowerCase().includes(termoPesquisa))
+      )
+    : usuarios;
+
+  const totalPaginas = Math.ceil(usuariosFiltrados.length / usuariosPorPagina);
   paginaAtual = Math.max(1, Math.min(paginaAtual, totalPaginas));
 
-  // Renderiza barra de paginação dinamicamente
+  // Renderiza barra de paginação e pesquisa
   const appContent = document.getElementById('app-content');
   let paginacaoHtml = `
     <div id="paginacao" class="paginacao">
-      <button onclick="paginaAnterior()" ${paginaAtual <= 1 ? 'disabled' : ''}>⬅ Anterior</button>
-      Página <span id="paginaAtual">${paginaAtual}</span> de <span id="totalPaginas">${totalPaginas}</span>
-      <button onclick="proximaPagina()" ${paginaAtual >= totalPaginas ? 'disabled' : ''}>Próxima ➡</button>
+      <input type="text" id="barraPesquisa" placeholder="Pesquisar..." value="${termoPesquisa}" style="padding: 0.4em 1em; font-size: 1em; border-radius: 4px; border: 1px solid #ccc; min-width: 180px; margin-right: 1.5rem;" />
+      <div class="controle-paginas">
+        <button onclick="paginaAnterior()" ${paginaAtual <= 1 ? 'disabled' : ''}>⬅ Anterior</button>
+        Página <span id="paginaAtual">${paginaAtual}</span> de <span id="totalPaginas">${totalPaginas}</span>
+        <button onclick="proximaPagina()" ${paginaAtual >= totalPaginas ? 'disabled' : ''}>Próxima ➡</button>
+      </div>
     </div>
   `;
   // Renderiza tabela de usuários
   const inicio = (paginaAtual - 1) * usuariosPorPagina;
   const fim = inicio + usuariosPorPagina;
-  const tabelaHtml = gerarTabelaHtml(usuarios.slice(inicio, fim));
+  const tabelaHtml = gerarTabelaHtml(usuariosFiltrados.slice(inicio, fim));
   appContent.innerHTML = paginacaoHtml + tabelaHtml;
+
+  // Adiciona listener para pesquisa dinâmica e restaura foco/cursor
+  const barraPesquisa = document.getElementById('barraPesquisa');
+  if (barraPesquisa) {
+    // Evita múltiplos listeners
+    barraPesquisa.oninput = null;
+    barraPesquisa.addEventListener('input', (e) => {
+      // Salva posição do cursor
+      const pos = barraPesquisa.selectionStart;
+      termoPesquisa = e.target.value.toLowerCase();
+      paginaAtual = 1;
+      atualizarPaginacao();
+      // Após atualizar, restaura foco e posição do cursor
+      setTimeout(() => {
+        const novaBarra = document.getElementById('barraPesquisa');
+        if (novaBarra) {
+          novaBarra.focus();
+          novaBarra.setSelectionRange(pos, pos);
+        }
+      }, 0);
+    });
+    // Garante que o campo mantenha o foco ao renderizar
+    barraPesquisa.focus();
+  }
 }
 // Função para gerar o HTML da tabela de usuários
 function gerarTabelaHtml(data) {
