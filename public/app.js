@@ -87,23 +87,61 @@ function atualizarPaginacao() {
   const totalPaginas = Math.ceil(usuarios.length / usuariosPorPagina);
   paginaAtual = Math.max(1, Math.min(paginaAtual, totalPaginas));
 
-  const paginaAtualEl = document.getElementById("paginaAtual");
-  const totalPaginasEl = document.getElementById("totalPaginas");
-  
-  if (paginaAtualEl) paginaAtualEl.innerText = paginaAtual;
-  if (totalPaginasEl) totalPaginasEl.innerText = totalPaginas;
-
-  // Atualiza estado dos botões de paginação
-  const btnAnterior = document.querySelector('.paginacao button:first-child');
-  const btnProxima = document.querySelector('.paginacao button:last-child');
-  
-  if (btnAnterior) btnAnterior.disabled = paginaAtual <= 1;
-  if (btnProxima) btnProxima.disabled = paginaAtual >= totalPaginas;
-
+  // Renderiza barra de paginação dinamicamente
+  const appContent = document.getElementById('app-content');
+  let paginacaoHtml = `
+    <div id="paginacao" class="paginacao">
+      <button onclick="paginaAnterior()" ${paginaAtual <= 1 ? 'disabled' : ''}>⬅ Anterior</button>
+      Página <span id="paginaAtual">${paginaAtual}</span> de <span id="totalPaginas">${totalPaginas}</span>
+      <button onclick="proximaPagina()" ${paginaAtual >= totalPaginas ? 'disabled' : ''}>Próxima ➡</button>
+    </div>
+  `;
+  // Renderiza tabela de usuários
   const inicio = (paginaAtual - 1) * usuariosPorPagina;
   const fim = inicio + usuariosPorPagina;
-
-  renderizarTabela(usuarios.slice(inicio, fim));
+  const tabelaHtml = gerarTabelaHtml(usuarios.slice(inicio, fim));
+  appContent.innerHTML = paginacaoHtml + tabelaHtml;
+}
+// Função para gerar o HTML da tabela de usuários
+function gerarTabelaHtml(data) {
+  let hash = window.location.hash || '';
+  let botaoAcaoHeader = '';
+  if (hash === '#/alterar') {
+    botaoAcaoHeader = '<th>Ações</th>';
+  } else if (hash === '#/remover') {
+    botaoAcaoHeader = '<th>Ações</th>';
+  }
+  let html = `<table id="tabelaUsuarios">
+    <thead>
+      <tr>
+        <th onclick="ordenarTabela('nome')">Nome</th>
+        <th onclick="ordenarTabela('idade')">Idade</th>
+        <th onclick="ordenarTabela('endereco')">Endereço</th>
+        <th onclick="ordenarTabela('email')">Email</th>
+        ${botaoAcaoHeader}
+      </tr>
+    </thead>
+    <tbody>
+  `;
+  data.forEach(u => {
+    let botaoAcao = '';
+    if (hash === '#/alterar') {
+      botaoAcao = `<td><button onclick="editarUsuario('${u.id}')">✏️ Editar</button></td>`;
+    } else if (hash === '#/remover') {
+      botaoAcao = `<td><button onclick="removerUsuario('${u.id}')">🗑️ Remover</button></td>`;
+    }
+    html += `
+      <tr>
+        <td>${u.nome}</td>
+        <td>${u.idade}</td>
+        <td>${u.endereco || 'N/A'}</td>
+        <td>${u.email}</td>
+        ${botaoAcao}
+      </tr>
+    `;
+  });
+  html += '</tbody></table>';
+  return html;
 }
 
 /**
@@ -241,13 +279,7 @@ async function handleLocation() {
     // Remove o loader após carregar tudo
     hideLoader();
     
-    // Condicionalmente mostra ou esconde a seção de paginação
-    const paginacao = document.getElementById('paginacao');
-    if (hash === '#/') {
-      paginacao.style.display = 'block';
-    } else {
-      paginacao.style.display = 'none';
-    }
+    // Não é mais necessário manipular a div de paginação fixa
     
   } catch (error) {
     console.error('Erro ao carregar a view:', error);
