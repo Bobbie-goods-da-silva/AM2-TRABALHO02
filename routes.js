@@ -47,22 +47,33 @@ router.get("/views/:filename", (req, res) => {
  * @param {number} count (opcional) - número máximo de usuários a retornar (default: 100)
  */
 router.get("/list-users/:count?", async (req, res) => {
-  let num = parseInt(req.params.count, 10); // Converte o parâmetro para número inteiro
-  if (isNaN(num)) num = 100; // Valor padrão se não for fornecido
-  if (num == 0) {
-    // Se não houver limite, retorna todos os usuários
+  let num = parseInt(req.params.count, 10);
+  if (isNaN(num)) num = 0; // Se não informado, retorna todos
+  if (num === 0) {
+    // Sem limite, retorna todos os usuários
     console.log(`Nenhum limite aplicado. Retornando todos os usuários.`);
-    num = 10000; // Define um número máximo para evitar sobrecarga
   } else if (num < 0) {
     num = 100;
-  } else if (num > 10000) {
-    num = 10000; // Limita o número máximo de usuários a 10.000
-    console.log(`Número máximo de usuários a retornar: ${num}`);
   }
+  // Removido o limite de 10000
 
   try {
-    const todos = await lerUsuarios(num); // Lê N usuários do arquivo
-    res.json(todos); // Retorna os usuários como JSON
+    const todos = await lerUsuarios(num); // Se num=0, retorna todos
+    res.json(todos);
+  } catch (err) {
+    console.error("❌ Falha ao ler usuários:", err);
+    res.status(500).json({ error: "Não foi possível ler usuários." });
+  }
+});
+
+/**
+ * Rota GET /usuarios
+ * Retorna todos os usuários do arquivo usuarios.json
+ */
+router.get("/usuarios", async (req, res) => {
+  try {
+    const todos = await lerUsuarios(0); // 0 = retorna todos
+    res.json(todos);
   } catch (err) {
     console.error("❌ Falha ao ler usuários:", err);
     res.status(500).json({ error: "Não foi possível ler usuários." });

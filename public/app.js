@@ -70,9 +70,10 @@ function showMessage(message, type) {
 /**
  * Função assíncrona que carrega os usuários da API
  */
-async function carregarUsuarios(num = 0) {
+async function carregarUsuarios() {
   try {
-    const resposta = await fetch(`/list-users/${num || 1000}`);
+    // Usa a rota existente que já funciona, com parâmetro 0 para retornar todos
+    const resposta = await fetch('/list-users/0');
     usuarios = await resposta.json();
     console.log('Usuários carregados:', usuarios.length);
     atualizarPaginacao();
@@ -552,5 +553,7 @@ window.editarUsuario = editarUsuario;
 window.removerUsuario = removerUsuario;
 window.showLoader = showLoader;
 window.hideLoader = hideLoader;
+window.showMessage = showMessage;
+window.fecharModalEdicao = fecharModalEdicao;
 window.showMessage = showMessage;
 window.fecharModalEdicao = fecharModalEdicao;
