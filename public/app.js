@@ -21,19 +21,34 @@ const routes = {
   '#/remover': '/views/remover.html'
 };
 
+// Mapeamento de rotas para títulos de página
+const pageTitles = {
+  '': 'Lista de Usuários',
+  '#/': 'Lista de Usuários',
+  '#/cadastro': 'Cadastro de Usuário',
+  '#/alterar': 'Alterar Usuário',
+  '#/remover': 'Remover Usuário'
+};
+
 /**
  * Exibe o loader no contêiner de conteúdo
  */
 function showLoader() {
   const appContent = document.getElementById('app-content');
-  appContent.innerHTML = '<div class="loader"></div>';
+  let loaderEl = document.getElementById('global-loader');
+  if (!loaderEl) {
+    loaderEl = document.createElement('div');
+    loaderEl.className = 'loader';
+    loaderEl.id = 'global-loader';
+    appContent.appendChild(loaderEl);
+  }
 }
 
 /**
  * Remove o loader do contêiner de conteúdo
  */
 function hideLoader() {
-  const loader = document.querySelector('.loader');
+  const loader = document.getElementById('global-loader');
   if (loader) {
     loader.remove();
   }
@@ -57,7 +72,13 @@ function showMessage(message, type) {
   messageEl.textContent = message;
   
   // Insere no topo do contêiner
-  appContent.insertBefore(messageEl, appContent.firstChild);
+  // Insere antes do main-content-area se existir, ou como primeiro filho
+  const mainContentArea = document.getElementById('main-content-area');
+  if (mainContentArea) {
+    appContent.insertBefore(messageEl, mainContentArea);
+  } else {
+    appContent.insertBefore(messageEl, appContent.firstChild);
+  }
   
   // Remove a mensagem após 5 segundos
   setTimeout(() => {
@@ -76,9 +97,10 @@ async function carregarUsuarios() {
     const resposta = await fetch('/list-users/0');
     usuarios = await resposta.json();
     console.log('Usuários carregados:', usuarios.length);
-    atualizarPaginacao();
+    atualizarPaginacao(); // Chama a atualização da paginação após carregar
   } catch (error) {
     console.error('Erro ao carregar usuários:', error);
+    showMessage('Erro ao carregar usuários: ' + error.message, 'error');
   }
 }
 
@@ -98,8 +120,18 @@ function atualizarPaginacao() {
   const totalPaginas = Math.ceil(usuariosFiltrados.length / usuariosPorPagina);
   paginaAtual = Math.max(1, Math.min(paginaAtual, totalPaginas));
 
+  // Obtém o contêiner principal para o conteúdo da view
+  const mainContentArea = document.getElementById('main-content-area');
+  if (!mainContentArea) {
+    console.error('Elemento #main-content-area não encontrado. A página pode não ter sido inicializada corretamente.');
+    return;
+  }
+
+  // Obtém o título da página atual
+  const hash = window.location.hash || '';
+  const pageTitle = pageTitles[hash] || 'Página Não Encontrada';
+
   // Renderiza barra de paginação e pesquisa
-  const appContent = document.getElementById('app-content');
   let paginacaoHtml = `
     <div id="paginacao" class="paginacao">
       <input type="text" id="barraPesquisa" placeholder="Pesquisar..." value="${termoPesquisa}" style="padding: 0.4em 1em; font-size: 1em; border-radius: 4px; border: 1px solid #ccc; min-width: 180px; margin-right: 1.5rem;" />
@@ -114,7 +146,13 @@ function atualizarPaginacao() {
   const inicio = (paginaAtual - 1) * usuariosPorPagina;
   const fim = inicio + usuariosPorPagina;
   const tabelaHtml = gerarTabelaHtml(usuariosFiltrados.slice(inicio, fim));
-  appContent.innerHTML = paginacaoHtml + tabelaHtml;
+  
+  // Constrói todo o HTML da página (título, paginação, tabela)
+  mainContentArea.innerHTML = `
+    <h2 id="page-title">${pageTitle}</h2>
+    ${paginacaoHtml}
+    ${tabelaHtml}
+  `;
 
   // Adiciona listener para pesquisa dinâmica e restaura foco/cursor
   const barraPesquisa = document.getElementById('barraPesquisa');
@@ -149,13 +187,22 @@ function gerarTabelaHtml(data) {
   } else if (hash === '#/remover') {
     botaoAcaoHeader = '<th>Ações</th>';
   }
+
+  // Helper function to get sort indicator
+  const getSortIndicator = (campo) => {
+    if (ordemAtual.campo === campo) {
+      return ordemAtual.crescente ? ' ▲' : ' ▼';
+    }
+    return '';
+  };
+
   let html = `<table id="tabelaUsuarios">
     <thead>
       <tr>
-        <th onclick="ordenarTabela('nome')">Nome</th>
-        <th onclick="ordenarTabela('idade')">Idade</th>
-        <th onclick="ordenarTabela('endereco')">Endereço</th>
-        <th onclick="ordenarTabela('email')">Email</th>
+        <th onclick="ordenarTabela('nome')">Nome${getSortIndicator('nome')}</th>
+        <th onclick="ordenarTabela('idade')">Idade${getSortIndicator('idade')}</th>
+        <th onclick="ordenarTabela('endereco')">Endereço${getSortIndicator('endereco')}</th>
+        <th onclick="ordenarTabela('email')">Email${getSortIndicator('email')}</th>
         ${botaoAcaoHeader}
       </tr>
     </thead>
@@ -275,6 +322,7 @@ async function handleLocation() {
   console.log('Navegando para:', hash);
   
   const viewPath = routes[hash];
+  const pageTitle = pageTitles[hash] || 'Página Não Encontrada';
   
   if (!viewPath) {
     console.error(`Rota não encontrada: ${hash}`);
@@ -292,9 +340,12 @@ async function handleLocation() {
       throw new Error(`Erro ao carregar view: ${response.status}`);
     }
     
-    const html = await response.text();
+    const html = await response.text(); // O HTML da view pode ser vazio para algumas rotas agora
     const appContent = document.getElementById('app-content');
-    appContent.innerHTML = html;
+    
+    // Limpa o conteúdo principal e cria o contêiner para a view
+    appContent.innerHTML = `<div id="main-content-area"></div>`;
+    const mainContentArea = document.getElementById('main-content-area');
     
     console.log('View carregada:', viewPath);
     
@@ -304,20 +355,19 @@ async function handleLocation() {
       case '#/':
       case '#/alterar':
       case '#/remover':
-        console.log('Carregando usuários para:', hash);
+        // Para estas rotas, o título e o conteúdo (tabela/paginação) são gerados por atualizarPaginacao
         await carregarUsuarios();
         break;
         
       case '#/cadastro':
-        console.log('Configurando formulário de cadastro');
+        // Para a rota de cadastro, injetamos o título e o HTML do formulário
+        mainContentArea.innerHTML = `<h2 id="page-title">${pageTitle}</h2>` + html;
         setupCadastroForm();
         break;
     }
     
     // Remove o loader após carregar tudo
     hideLoader();
-    
-    // Não é mais necessário manipular a div de paginação fixa
     
   } catch (error) {
     console.error('Erro ao carregar a view:', error);
@@ -331,6 +381,7 @@ async function handleLocation() {
  * Configura o formulário de cadastro
  */
 function setupCadastroForm() {
+  // Os elementos do formulário agora estarão dentro de #main-content-area
   const formulario = document.getElementById("formulario");
   
   if (formulario) {
@@ -434,7 +485,7 @@ async function removerUsuario(id) {
     
     if (resultado.ok) {
       showMessage(`Usuário ${usuario.nome} removido com sucesso!`, 'success');
-      carregarUsuarios();
+      carregarUsuarios(); // Recarrega a lista para refletir a remoção
     } else {
       showMessage(`Erro ao remover usuário: ${resultado.error || "Erro desconhecido"}`, 'error');
     }
@@ -553,7 +604,5 @@ window.editarUsuario = editarUsuario;
 window.removerUsuario = removerUsuario;
 window.showLoader = showLoader;
 window.hideLoader = hideLoader;
-window.showMessage = showMessage;
-window.fecharModalEdicao = fecharModalEdicao;
 window.showMessage = showMessage;
 window.fecharModalEdicao = fecharModalEdicao;
