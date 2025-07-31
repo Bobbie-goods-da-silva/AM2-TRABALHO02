@@ -141,3 +141,6 @@ dist
 .priv
 usuarios.json
 TRABALHO2.md
+ingest.py
+digest_completo_local.txt
+test-qwen.py
