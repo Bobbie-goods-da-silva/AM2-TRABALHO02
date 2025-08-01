@@ -11,10 +11,10 @@
 
 /* Variáveis CSS para consistência */
 :root {
-  /* Cores principais - ROXO VIBRANTE */
-  --primary-color: #8b5cf6;
-  --primary-dark: #7c3aed;
-  --primary-light: #a78bfa;
+  /* Cores principais - ROSA PINK VIBRANTE */
+  --primary-color: #ec4899;
+  --primary-dark: #db2777;
+  --primary-light: #f472b6;
   --secondary-color: #10b981;
   --danger-color: #ef4444;
   --warning-color: #f59e0b;
@@ -321,7 +321,7 @@ tr:last-child td {
 .paginacao input[type="text"]:focus {
   outline: none;
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+  box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.1);
 }
 
 .paginacao input[type="text"]::placeholder {
@@ -375,7 +375,7 @@ input[type="email"]:focus,
 input[type="number"]:focus {
   outline: none;
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+  box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.1);
 }
 
 input[type="text"]::placeholder,
@@ -723,6 +723,6 @@ p, td, th, label {
 
 /* Estilo para seleção de texto */
 ::selection {
-  background-color: rgba(139, 92, 246, 0.2);
+  background-color: rgba(236, 72, 153, 0.2);
   color: var(--text-primary);
 }
