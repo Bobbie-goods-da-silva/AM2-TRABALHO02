@@ -211,9 +211,11 @@ function gerarTabelaHtml(data) {
   data.forEach(u => {
     let botaoAcao = '';
     if (hash === '#/alterar') {
-      botaoAcao = `<td><button onclick="editarUsuario('${u.id}')">✏️ Editar</button></td>`;
+      // Adiciona a classe 'btn-editar' ao botão
+      botaoAcao = `<td><button onclick="editarUsuario('${u.id}')" class="btn-editar">✏️ Editar</button></td>`;
     } else if (hash === '#/remover') {
-      botaoAcao = `<td><button onclick="removerUsuario('${u.id}')">🗑️ Remover</button></td>`;
+      // Adiciona a classe 'btn-remover' ao botão
+      botaoAcao = `<td><button onclick="removerUsuario('${u.id}')" class="btn-remover">🗑️ Remover</button></td>`;
     }
     html += `
       <tr>
@@ -249,9 +251,11 @@ function renderizarTabela(data) {
     let botaoAcao = '';
     
     if (hash === '#/alterar') {
-      botaoAcao = `<td><button onclick="editarUsuario('${u.id}')">✏️ Editar</button></td>`;
+      // Adiciona a classe 'btn-editar' ao botão
+      botaoAcao = `<td><button onclick="editarUsuario('${u.id}')" class="btn-editar">✏️ Editar</button></td>`;
     } else if (hash === '#/remover') {
-      botaoAcao = `<td><button onclick="removerUsuario('${u.id}')">🗑️ Remover</button></td>`;
+      // Adiciona a classe 'btn-remover' ao botão
+      botaoAcao = `<td><button onclick="removerUsuario('${u.id}')" class="btn-remover">🗑️ Remover</button></td>`;
     }
     
     tr.innerHTML = `
